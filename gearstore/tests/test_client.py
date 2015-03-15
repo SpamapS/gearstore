@@ -35,7 +35,6 @@ class TestGearstoreClient(base.TestCase):
     def test_client(self):
         c = client.Client(client_id='test_client_client')
         c.addServer('127.0.0.1', port=self.server.port)
-        # TODO: assert jobs get pushed into server
         w = gear.Worker(client_id='test_client_worker')
         w.addServer('127.0.0.1', port=self.server.port)
         c.waitForServer()

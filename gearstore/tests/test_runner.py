@@ -21,8 +21,8 @@ Tests for `gearstore.runner` module.
 
 import time
 
-import gear
 import fixtures
+import gear
 
 from gearstore import client
 from gearstore import runner
@@ -60,11 +60,9 @@ class TestGearstoreWorker(base.TestCase):
         oldport = self.server.port
         self.server.shutdown()
         self.server = gear.Server(port=oldport)
-        r.client.removeServer('127.0.0.1', oldport)
-        r.client.addServer('127.0.0.1', oldport)
         try:
             r.ship()
-        except gear.GearmanError as e:
+        except gear.GearmanError:
             # Retry 1 time
             r.ship()
         real_worker = gear.Worker(client_id='real_worker')
