@@ -22,7 +22,7 @@ from gearstore import client
 from gearstore.store import sqla
 
 
-class Runner(object):
+class Stocker(object):
     def __init__(self, client_id=None, worker_id=None, dsn=None):
         self.dsn = dsn
         self._store = sqla.Store(self.dsn)
@@ -41,7 +41,7 @@ class Runner(object):
     def registerStoreFunction(self):
         self.worker.registerFunction(client.DEFAULT_STORE_FUNC)
 
-    def run(self):
+    def stock(self):
         job = self.worker.getJob()
         payload = json.loads(job.arguments)
         unique = job.unique or bytes(uuid.uuid4())
