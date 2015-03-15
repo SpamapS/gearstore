@@ -14,6 +14,7 @@
 # limitations under the License.
 import sqlalchemy as sa
 from sqlalchemy import orm
+from sqlalchemy.orm import exc
 
 from gearstore.store import sqla_models as models
 
@@ -43,7 +44,11 @@ class Store(object):
 
     def consume(self, batchlimit=1000):
         sess = self._sessionmaker()
-        for j in sess.query(models.Job).limit(batchlimit):
+        for rec in range(0, batchlimit):
+            try:
+                j = sess.query(models.Job).limit(1).one()
+            except exc.NoResultFound:
+                return
             yield {'unique': j.id, 'funcname': j.funcname, 'arg': j.arg}
             sess.delete(j)
             # XXX: allow committing deletes in batches some day
