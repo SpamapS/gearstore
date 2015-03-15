@@ -26,7 +26,7 @@ import fixtures
 
 from gearstore import client
 from gearstore import runner
-from gearstore.store import sqlalchemy as store  # XXX: can haz plugins?
+from gearstore.store import sqla as store  # XXX: can haz plugins?
 from gearstore.tests import base
 
 
@@ -36,28 +36,41 @@ class TestGearstoreWorker(base.TestCase):
         self.server = gear.Server(port=0)
 
     def test_runner(self):
-        c = client.Client()
-        c.addServer('127.0.0.1', port=self.server.port)
         sqlite_dir = self.useFixture(fixtures.TempDir()).path
-        dsn = 'sqlite://%s/jobs.sqlite' % sqlite_dir
-        store.Store(dsn).initialize()
+        dsn = 'sqlite:///%s/jobs.sqlite' % sqlite_dir
+        store.Store(dsn).initialize_schema()
+
+        c = client.Client(client_id='test_pretend_sender')
+        c.addServer('127.0.0.1', port=self.server.port)
         r = runner.Runner(client_id='test_runner', dsn=dsn)
         r.addServer('127.0.0.1', port=self.server.port)
         c.waitForServer()
         r.waitForServer()
         r.registerStoreFunction()
-        j = c.submitJob('test_store_job', 'payload')
+        j = gear.Job('test_store_job', b'payload')
+        c.submitJob(j, background=False)
         r.run()
-        self.assertIsNone(j.failure)
+        while not j.failure and not j.complete:
+            time.sleep(0.1)
+            print('%s %s' % (j.failure, j.complete))
+        self.assertFalse(j.failure)
         self.assertTrue(j.complete)
         # Job should be stored now, but not sent to a worker just yet. Test
         # this happened by shutting down gearman server and starting a new one.
+        oldport = self.server.port
         self.server.shutdown()
-        self.server = gear.Server(port=0)
-        r.waitForServer()
-        real_worker = gear.Worker(worker_id='real_worker')
+        self.server = gear.Server(port=oldport)
+        r.client.removeServer('127.0.0.1', oldport)
+        r.client.addServer('127.0.0.1', oldport)
+        try:
+            r.ship()
+        except gear.GearmanError as e:
+            # Retry 1 time
+            r.ship()
+        real_worker = gear.Worker(client_id='real_worker')
         real_worker.addServer('127.0.0.1', port=self.server.port)
         real_worker.registerFunction('test_store_job')
+        real_worker.waitForServer()
         j = real_worker.getJob()
         self.assertEqual('test_store_job', j.name)
-        self.assertEqual('payload', j.data)
+        self.assertEqual(b'payload', j.arguments)

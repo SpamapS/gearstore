@@ -36,16 +36,17 @@ class TestGearstoreClient(base.TestCase):
         c = client.Client(client_id='test_client_client')
         c.addServer('127.0.0.1', port=self.server.port)
         # TODO: assert jobs get pushed into server
-        w = gear.Worker(worker_id='test_client_worker')
+        w = gear.Worker(client_id='test_client_worker')
         w.addServer('127.0.0.1', port=self.server.port)
         c.waitForServer()
         w.waitForServer()
-        c.submitJob('test_forwarding', 'payload for forwarding')
+        j = gear.Job('test_forwarding', 'payload for forwarding')
+        c.submitJob(j, background=False)
         # Now we're going to pretend to be a gearstore worker
-        w.registerFunction(client.DEFAULT_STORE_FORWARD_FUNC)
+        w.registerFunction(client.DEFAULT_STORE_FUNC)
         j = w.getJob()
-        self.assertEqual(j.name, client.DEFAULT_STORE_FORWARD_FUNC)
-        raw = j.data
+        self.assertEqual(j.name, client.DEFAULT_STORE_FUNC)
+        raw = j.arguments
         payload = json.loads(raw)
         self.assertIn('funcname', payload)
         self.assertIn('arg', payload)

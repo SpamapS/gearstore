@@ -18,11 +18,14 @@ import gear
 
 DEFAULT_STORE_FUNC = 'gearstore_store_job'
 
+
 class Client(gear.Client):
 
-    def submitJob(self, job, background=None, timeout=30):
-        real_job = gear.ClientJob()
-        real_job.name = DEFAULT_STORE_FUNC
-        real_job.data = json.dumps({'funcname': job.name, 'arg': job.data})
-        return super(GearhornClient, self).submitJob(real_job, background,
-                                                     timeout)
+    def submitJob(self, job, background=None,
+                  precedence=gear.PRECEDENCE_NORMAL,
+                  timeout=30):
+        arguments = json.dumps({'funcname': job.name, 'arg': job.arguments})
+        job.name = DEFAULT_STORE_FUNC
+        job.arguments = arguments
+        return super(Client, self).submitJob(job, background,
+                                             precedence, timeout)
