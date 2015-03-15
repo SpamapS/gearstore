@@ -39,5 +39,5 @@ def main():
 
     stkr.waitForServer()
     while True:
-        stkr.run()
+        stkr.stock()
         stkr.ship()
