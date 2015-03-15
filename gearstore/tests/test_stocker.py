@@ -52,7 +52,6 @@ class TestGearstoreWorker(base.TestCase):
         r.stock()
         while not j.failure and not j.complete:
             time.sleep(0.1)
-            print('%s %s' % (j.failure, j.complete))
         self.assertFalse(j.failure)
         self.assertTrue(j.complete)
         # Job should be stored now, but not sent to a worker just yet. Test

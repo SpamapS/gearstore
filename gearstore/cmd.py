@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import argparse
+import logging
 import socket
 
 from gearstore import stocker
@@ -27,15 +28,16 @@ def main():
 
     args = parser.parse_args()
 
+    logging.basicConfig(level=logging.DEBUG)
+
     stkr = stocker.Stocker(
         client_id=socket.gethostname(), dsn=args.sqlalchemy_dsn)
     for s in args.servers:
         if '/' in s:
             (host, port) = s.split('/', 2)
+            stkr.addServer(host, port)
         else:
-            host = s
-            port = None
-        stkr.addServer(host, port)
+            stkr.addServer(s)
 
     stkr.waitForServer()
     while True:

@@ -15,6 +15,7 @@
 
 import json
 import uuid
+import logging
 
 import gear
 
@@ -29,6 +30,7 @@ class Stocker(object):
         self.worker = gear.Worker(client_id or worker_id)
         client_id_client = '%s_shipper' % (client_id or worker_id)
         self.client = gear.Client(client_id_client)
+        self._log = logging.getLogger('gearstore.stocker')
 
     def addServer(self, *args, **kwargs):
         self.worker.addServer(*args, **kwargs)
@@ -48,8 +50,10 @@ class Stocker(object):
         payload['unique'] = unique
         self._store.save(payload)
         job.sendWorkComplete(data=unique)
+        self._log.info('stocked %s' % str(job))
 
     def ship(self):
         for job in self._store.consume():
             gjob = gear.Job(job['funcname'], job['arg'], job['unique'])
             self.client.submitJob(gjob)
+            self._log.info('shipped %s' % str(job))
