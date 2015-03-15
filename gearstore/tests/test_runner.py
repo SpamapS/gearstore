@@ -64,6 +64,7 @@ class TestGearstoreWorker(base.TestCase):
             r.ship()
         except gear.GearmanError:
             # Retry 1 time
+            r.waitForServer()
             r.ship()
         real_worker = gear.Worker(client_id='real_worker')
         real_worker.addServer('127.0.0.1', port=self.server.port)
