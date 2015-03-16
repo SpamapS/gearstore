@@ -18,6 +18,7 @@ import logging
 import socket
 
 from gearstore import stocker
+from gearstore.store import sqla
 
 
 def main():
@@ -43,3 +44,14 @@ def main():
     while True:
         stkr.stock()
         stkr.ship()
+
+
+def init_schema():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('sqlalchemy_dsn', help='SQLAlchemy DSN of database to '
+                        ' initialize')
+
+    args = parser.parse_args()
+
+    store = sqla.Store(args.sqlalchemy_dsn)
+    store.initialize_schema()
