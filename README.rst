@@ -23,3 +23,22 @@ Features
 
 * Distributed message persistence for Gearman jobs makes persistence scale out.
 * No centralized store makes system more fault tolerant.
+
+Quick Start
+-----------
+
+Gearstore is pip installable. Once it has been installed, you will need
+to initialize the database schema::
+
+  gearstore-init-schema mysql://user:pass@host/dbname
+
+You will also need a gearman server available. The library used by
+gearstore, gear, includes one and it will be availalbe in the same
+place as gearstore as  `geard`::
+
+  geard
+
+Once the database is initialized, run as many gearstores as is needed
+to keep traffic flowing::
+
+  gearstore --sqlalchemy-dsn=mysql://user:pass@host/dbname 
