@@ -52,9 +52,13 @@ class Stocker(object):
         payload = json.loads(job.arguments)
         unique = job.unique or bytes(uuid.uuid4())
         payload['unique'] = unique
-        self._store.save(payload)
-        job.sendWorkComplete(data=unique)
-        self._log.info('stocked %s' % str(job))
+        try:
+            self._store.save(payload)
+            job.sendWorkComplete(data=unique)
+            self._log.info('stocked %s' % str(job))
+        except Exception as e:
+            self._log.exception(e)
+            job.sendWorkException(bytes(str(e).encode('utf-8')))
 
     def ship(self):
         try:

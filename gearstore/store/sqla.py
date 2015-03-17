@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import sqlalchemy as sa
+from sqlalchemy import exc as sa_exc
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
@@ -39,12 +40,18 @@ class Store(object):
         j = models.Job(id=job.get('unique'), funcname=job.get('funcname'),
                        arg=job.get('arg'))
         sess = self.session()
-        sess.add(j)
-        # XXX: allow commit in batches some day
-        sess.commit()
+        try:
+            sess.add(j)
+            # XXX: allow commit in batches some day
+            sess.commit()
+        except sa_exc.IntegrityError:
+            sess.rollback()
+            # We don't actually care, because it means we already have this
+            # unique job ID
+            pass
 
     def consume(self, batchlimit=1000):
-        sess = self.session() 
+        sess = self.session()
         for rec in range(0, batchlimit):
             try:
                 j = sess.query(models.Job).limit(1).one()
