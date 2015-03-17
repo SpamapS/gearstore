@@ -19,7 +19,7 @@ Base = declarative.declarative_base()
 
 
 class Job(Base):
-    __tablename__ = "jobs"
+    __tablename__ = "job"
 
     id = sa.Column(sa.Binary(255), primary_key=True)
     funcname = sa.Column(sa.Binary(255))
