@@ -25,6 +25,7 @@ class Store(object):
     def __init__(self, details):
         self._engine = sa.create_engine(details)
         self._sessionmaker = orm.sessionmaker(bind=self._engine)
+        self.session = orm.scoped_session(self._sessionmaker)
 
     def initialize_schema(self):
         models.Base.metadata.create_all(self._engine)
@@ -37,13 +38,13 @@ class Store(object):
                 job[k] = job[k].encode('utf-8')
         j = models.Job(id=job.get('unique'), funcname=job.get('funcname'),
                        arg=job.get('arg'))
-        sess = self._sessionmaker()
+        sess = self.session()
         sess.add(j)
         # XXX: allow commit in batches some day
         sess.commit()
 
     def consume(self, batchlimit=1000):
-        sess = self._sessionmaker()
+        sess = self.session() 
         for rec in range(0, batchlimit):
             try:
                 j = sess.query(models.Job).limit(1).one()

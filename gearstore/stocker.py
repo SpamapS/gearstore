@@ -24,6 +24,9 @@ from gearstore.store import sqla
 
 
 class Stocker(object):
+    '''A combination gearman worker and client that stores all received jobs in
+       a database and then submits any jobs stored in the database to the
+       intended destination queue.'''
     def __init__(self, client_id=None, worker_id=None, dsn=None):
         self.dsn = dsn
         self._store = sqla.Store(self.dsn)

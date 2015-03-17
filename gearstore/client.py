@@ -20,6 +20,8 @@ DEFAULT_STORE_FUNC = 'gearstore_store_job'
 
 
 class Client(gear.Client):
+    '''Convenience class to allow submitting gearstored jobs with the
+       same API as gear'''
 
     def submitJob(self, job, background=None,
                   precedence=gear.PRECEDENCE_NORMAL,
