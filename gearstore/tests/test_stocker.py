@@ -19,6 +19,7 @@ test_gearstore
 Tests for `gearstore.stocker` module.
 """
 
+import threading
 import time
 
 import fixtures
@@ -59,16 +60,18 @@ class TestGearstoreWorker(base.TestCase):
         oldport = self.server.port
         self.server.shutdown()
         self.server = gear.Server(port=oldport)
-        try:
-            r.ship()
-        except gear.GearmanError:
-            # Retry 1 time
-            r.waitForServer()
-            r.ship()
-        real_worker = gear.Worker(client_id='real_worker')
-        real_worker.addServer('127.0.0.1', port=self.server.port)
-        real_worker.registerFunction('test_store_job')
-        real_worker.waitForServer()
-        j = real_worker.getJob()
-        self.assertEqual('test_store_job', j.name)
-        self.assertEqual(b'payload', j.arguments)
+
+        def _worker():
+            real_worker = gear.Worker(client_id='real_worker')
+            real_worker.addServer('127.0.0.1', port=self.server.port)
+            real_worker.registerFunction('test_store_job')
+            real_worker.waitForServer()
+            j = real_worker.getJob()
+            self.assertEqual('test_store_job', j.name)
+            self.assertEqual(b'payload', j.arguments)
+            j.sendWorkComplete()
+        wt = threading.Thread(target=_worker)
+        wt.start()
+        r.waitForServer()
+        r.ship()
+        wt.join(5)

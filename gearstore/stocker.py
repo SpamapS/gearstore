@@ -14,8 +14,9 @@
 # limitations under the License.
 
 import json
-import uuid
 import logging
+import time
+import uuid
 
 import gear
 
@@ -56,7 +57,26 @@ class Stocker(object):
         self._log.info('stocked %s' % str(job))
 
     def ship(self):
-        for job in self._store.consume():
-            gjob = gear.Job(job['funcname'], job['arg'], job['unique'])
-            self.client.submitJob(gjob)
-            self._log.info('shipped %s' % str(job))
+        try:
+            for job in self._store.consume():
+                gjob = gear.Job(job['funcname'], job['arg'], job['unique'])
+                self.client.submitJob(gjob)
+                # We now need to wait for the completion of that job before we
+                # reenter the consume generator which causes the record to be
+                # deleted.
+                while not gjob.complete:
+                    time.sleep(0.1)  # XXX: We need gear.Client to help
+                if gjob.failure:
+                    if job.exception:
+                        raise RuntimeError('Job failed due to exception (%s)'
+                                           ' and will be retried.'
+                                           % job.exception)
+                    else:
+                        raise RuntimeError('Job failed and will be retried.')
+                self._log.info('shipped %s' % str(job))
+        except (gear.GearmanError, RuntimeError) as e:
+            self._log.exception(e)
+            # We would have broken out of consume, so no changes would be made
+            # to the db, and another instance of consume will pick it up and
+            # retry. So just let this ship() call exit, and the next polling
+            # interval will retry.
