@@ -71,10 +71,10 @@ class Stocker(object):
                 while not gjob.complete:
                     time.sleep(0.1)  # XXX: We need gear.Client to help
                 if gjob.failure:
-                    if job.exception:
+                    if gjob.exception:
                         raise RuntimeError('Job failed due to exception (%s)'
                                            ' and will be retried.'
-                                           % job.exception)
+                                           % gjob.exception)
                     else:
                         raise RuntimeError('Job failed and will be retried.')
                 self._log.info('shipped %s' % str(job))
